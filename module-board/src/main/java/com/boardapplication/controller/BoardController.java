@@ -1,12 +1,10 @@
 package com.boardapplication.controller;
 
-import com.boardapplication.dto.BoardDto;
-import com.boardapplication.dto.CommentCreateRequestDto;
-import com.boardapplication.dto.UpdateBoardRequestDto;
+import com.boardapplication.common.core.LoginUserId;
+import com.boardapplication.dto.*;
 import com.boardapplication.repository.UserRepository;
 import com.boardapplication.service.BoardService;
 import com.boardapplication.service.CommentService;
-import com.boardapplication.dto.CreateBoardRequestDto;
 import com.boardapplication.service.ReportService;
 import com.core.entity.Board;
 import com.core.entity.Category;
@@ -17,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.Principal;
 import java.util.List;
 
 
@@ -45,6 +47,9 @@ public class BoardController {
 
     @GetMapping("/boardList")
     public String list(Model model, @PageableDefault(page = 0, size = 6, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        UserSessionDto principal = (UserSessionDto) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        System.out.println("authentication = " + principal.getUsername());
+
         Page<BoardDto> boardDtoPage = boardService.getBoardList(pageable);
 
         //Pageable은 0부터 시작
@@ -107,31 +112,32 @@ public class BoardController {
 
     @PostMapping("/board/write")
     public String createBoard(
+            @LoginUserId Long userId,
             @RequestParam String title,
             @RequestParam String content,
             @RequestParam MultipartFile file,
             RedirectAttributes redirectAttributes,
             HttpServletRequest request
     ) throws IOException {
-        Long userId = 1L;
         CreateBoardRequestDto createBoardRequestDto = CreateBoardRequestDto.builder()
                 .title(title)
                 .content(content)
                 .file(file)
                 .build();
 
+        System.out.println(userId);
         Long savedBoardId = boardService.save(userId, createBoardRequestDto, file);
         redirectAttributes.addAttribute("boardId", savedBoardId);
         return "redirect:/board/{boardId}";
     }
 
     @GetMapping("/board/{boardId}")
-    public String getBoardDetailView(Model model, @PathVariable Long boardId, HttpServletResponse response) throws IOException {
+    public String getBoardDetailView(@LoginUserId Long userId, Model model, @PathVariable Long boardId, HttpServletResponse response) throws IOException {
         Board board = boardService.getBoardById(boardId);
         model.addAttribute("board", board);
         List<Comment> list = commentService.getAllByBoardId(boardId);
         model.addAttribute("comments", list);
-        model.addAttribute("userId", 1L);
+        model.addAttribute("userId", userId);
         return "board/detail";
     }
 
@@ -147,15 +153,15 @@ public class BoardController {
     }
 
     @PostMapping("/board/{boardId}/comment")
-    public String createComment(@ModelAttribute CommentCreateRequestDto commentCreateRequestDto, @PathVariable Long boardId, RedirectAttributes redirectAttributes) throws IOException {
-        Comment comment = commentService.createParent(2L, commentCreateRequestDto.getContent(), boardId);
+    public String createComment(@LoginUserId Long userId, @ModelAttribute CommentCreateRequestDto commentCreateRequestDto, @PathVariable Long boardId, RedirectAttributes redirectAttributes) throws IOException {
+        Comment comment = commentService.createParent(userId, commentCreateRequestDto.getContent(), boardId);
 //        redirectAttributes.addAttribute("comment", comment);
         return "redirect:/board/{boardId}";
     }
 
     @PostMapping("/board/{boardId}/comment/{commentId}")
-    public String createChildrenComment(@ModelAttribute CommentCreateRequestDto commentCreateRequestDto, @PathVariable Long commentId, @PathVariable Long boardId, RedirectAttributes redirectAttributes) throws IOException {
-        commentService.createChildren(1L, boardId, commentId, commentCreateRequestDto);
+    public String createChildrenComment(@LoginUserId Long userId, @ModelAttribute CommentCreateRequestDto commentCreateRequestDto, @PathVariable Long commentId, @PathVariable Long boardId, RedirectAttributes redirectAttributes) throws IOException {
+        commentService.createChildren(userId, boardId, commentId, commentCreateRequestDto);
 //        redirectAttributes.addAttribute("comment", comment);
         return "redirect:/board/{boardId}";
     }
@@ -195,8 +201,8 @@ public class BoardController {
     }
 
     @PostMapping("/board/{boardId}/report")
-    public String reportBoard(@PathVariable Long boardId, Category category, MultipartFile file) throws IOException {
-        reportService.create(1L, boardId, file, category);
+    public String reportBoard(@LoginUserId Long userId, @PathVariable Long boardId, Category category, MultipartFile file) throws IOException {
+        reportService.create(userId, boardId, file, category);
         return "redirect:/board/{boardId}";
     }
 }

@@ -1,11 +1,7 @@
 package com.boardapplication.dto;
 
-import com.core.entity.User;
-import com.core.entity.Role;
-
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;

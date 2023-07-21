@@ -169,6 +169,7 @@ public class BoardService {
                     .title(createBoardRequestDto.getTitle())
                     .content(createBoardRequestDto.getContent())
                     .user(user)
+                    .status(Status.NORMAL)
                     .build();
             return boardRepository.save(board).getId();
         }
@@ -181,6 +182,7 @@ public class BoardService {
                 .title(createBoardRequestDto.getTitle())
                 .content(createBoardRequestDto.getContent())
                 .thumbnail(fileName)
+                .status(Status.NORMAL)
                 .user(user)
                 .build();
         return boardRepository.save(board).getId();

@@ -23,7 +23,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http.csrf().disable()
+
+        http.csrf().disable()
                 .authorizeRequests()
                 .mvcMatchers("/**").permitAll()
 
@@ -37,14 +38,14 @@ public class SecurityConfig {
                  */
                 .anyRequest().authenticated()
                 .and()
+
                 .formLogin()
                 .usernameParameter("username")
                 .passwordParameter("password")
                 .loginProcessingUrl("/login")
                 .defaultSuccessUrl("/")
                 .and()
-                .logout().logoutSuccessUrl("/")
-                .and().build();
-    }
+                .logout().logoutSuccessUrl("/login");
+        return http.build();}
 }
 

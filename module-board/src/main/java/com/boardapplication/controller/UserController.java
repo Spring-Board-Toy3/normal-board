@@ -1,11 +1,15 @@
 package com.boardapplication.controller;
 
 import com.boardapplication.configuration.JoinValidator;
+import com.boardapplication.dto.CheckDuplicateNicknameResponseDto;
 import com.boardapplication.dto.JoinDto;
 import com.boardapplication.repository.UserRepository;
 import com.boardapplication.service.UserService;
 import com.core.entity.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,6 +18,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 
@@ -24,6 +29,7 @@ public class UserController {
     private final JoinValidator joinValidator;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     @InitBinder("joinDto")
     public void initBinder(WebDataBinder webDataBinder) {
@@ -36,14 +42,9 @@ public class UserController {
         if (authentication != null && authentication.isAuthenticated()) {
             return "redirect:/boardList";
         } else {
-            return "/login";
+            return "redirect:/login";
         }
 
-    }
-
-    @GetMapping("/login")
-    public String login(){
-        return "login";
     }
 
 
@@ -63,20 +64,26 @@ public class UserController {
         }
         User user = userService.processNewUser(joinDto);
 
-        return "redirect:/boardList";
+        return "redirect:/login";
     }
 
-    /*
     @GetMapping("/checkusername")
-    public ResponseEntity<String> checkUsername(@RequestParam String username) {
+    public ResponseEntity<CheckDuplicateNicknameResponseDto> checkUsername(@RequestParam String username) throws JsonProcessingException {
+        System.out.println("username = " + username);
         if (userRepository.existsByUsername(username)) {
-            return ResponseEntity.ok("이미 사용중인 아이디입니다.");
+            CheckDuplicateNicknameResponseDto checkDuplicateNicknameResponseDto = CheckDuplicateNicknameResponseDto.builder()
+                    .message("이미 사용중인 아이디 입니다.")
+                    .build();
+
+            return ResponseEntity.badRequest().body(checkDuplicateNicknameResponseDto);
         } else {
-            return ResponseEntity.ok("사용 가능한 아이디입니다.");
+            CheckDuplicateNicknameResponseDto checkDuplicateNicknameResponseDto = CheckDuplicateNicknameResponseDto.builder()
+                    .message("사용 가능한 아이디입니다.")
+                    .build();
+            return ResponseEntity.ok(checkDuplicateNicknameResponseDto);
         }
     }
 
-     */
 
 
     @GetMapping("/profile")
