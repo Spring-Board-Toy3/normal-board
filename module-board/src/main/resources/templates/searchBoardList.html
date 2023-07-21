@@ -52,7 +52,7 @@
                         <h3 class="board-number" th:text="${board.id +'번'}" style="margin-top: 5px"></h3>
                         <h6 class="board-title" th:text="${'제목: '+ board.title}"></h6>
                         <p class="board-userId" th:text="${'닉네임: ' + board.userNickname}"></p>
-                        <p class="board-content" th:utext="${'내용 ' + board.content}"></p>
+                        <p class="board-content" th:text="${'내용: ' + #strings.replace(board.content, '<p>', '').replace('</p>', '')}"></p>
                     </div>
                 </a>
             </div>
